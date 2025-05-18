@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malicious IP Detector</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Malicious IP Detection System</h1>
+            <p>Analyze IP addresses for potential threats</p>
+        </header>
+
+        <div class="card">
+            {% if error %}
+            <div class="alert error">
+                <span class="close-btn">&times;</span>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" class="analysis-form">
+                <div class="input-group">
+                    <div class="ip-input-container">
+                        <label for="ip_address">Enter IP Address</label>
+                        <input type="text" 
+                               id="ip_address"
+                               name="ip_address" 
+                               placeholder="e.g., 8.8.8.8"
+                               value="{{ request.form.ip_address if request.form }}">
+                    </div>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="file-upload-container">
+                        <label for="file">Upload Network Logs</label>
+                        <div class="file-upload">
+                            <input type="file" 
+                                   id="file"
+                                   name="file" 
+                                   accept=".csv,.json">
+                            <div class="file-upload-label">
+                                <span class="file-btn">Choose File</span>
+                                <span class="file-name">
+                                    {% if request.files and request.files.file.filename %}
+                                        {{ request.files.file.filename }}
+                                    {% else %}
+                                        No file selected
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="analyze-btn">
+                    <span class="btn-text">Analyze</span>
+                    <span class="btn-loader"></span>
+                </button>
+            </form>
+        </div>
+
+        {% if analysis %}
+        <div class="results-card">
+            <h2>Analysis Results</h2>
+            
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-value">{{ analysis.ip_count }}</span>
+                    <span class="stat-label">IPs Analyzed</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ analysis.critical_count }}</span>
+                    <span class="stat-label">Critical</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ analysis.warning_count }}</span>
+                    <span class="stat-label">Warnings</span>
+                </div>
+            </div>
+
+            {% if analysis.map %}
+            <div class="map-container">
+                <h3>Geolocation</h3>
+                {{ analysis.map|safe }}
+            </div>
+            {% endif %}
+
+            {% if analysis.plot %}
+            <div class="plot-container">
+                <h3>Activity Analysis</h3>
+                {{ analysis.plot|safe }}
+            </div>
+            {% endif %}
+
+            <div class="table-container">
+                <h3>Detailed Results</h3>
+                {{ analysis.table|safe }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // File input display
+        document.getElementById('file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+            document.querySelector('.file-name').textContent = fileName;
+        });
+
+        // Close error message
+        document.querySelector('.close-btn')?.addEventListener('click', function() {
+            this.parentElement.style.display = 'none';
+        });
+
+        // Loading animation on submit
+        document.querySelector('form').addEventListener('submit', function() {
+            const btn = this.querySelector('.analyze-btn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').textContent = 'Analyzing...';
+            btn.querySelector('.btn-loader').style.display = 'inline-block';
+        });
+    </script>
+</body>
+</html>
